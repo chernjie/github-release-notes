@@ -27,7 +27,7 @@ Merge $GIT_TAG to $GIT_START_REF:
 $(_showPullRequests)
 
 \`\`\`
-$(_getDiffFileList HEAD origin/$GIT_START_REF | _fileHashes)
+$(_getDiffFileList HEAD $GIT_START_REF | _fileHashes)
 \`\`\`
 TEMPLATE
 }
@@ -35,7 +35,7 @@ TEMPLATE
 _showPullRequests() {
   local GIT_REF=$(git rev-parse --quiet --verify $GIT_TAG || echo HEAD)
   local GITHUB_API_ENDPOINT=$(_findGithubApiEndpoint)
-  git log origin/$GIT_START_REF...$GIT_REF --merges --format=%s |
+  git log $GIT_START_REF...$GIT_REF --merges --format=%s |
     grep -oE " #[0-9]+ " |
     tr -d "# " |
     xargs -n1 -I{} echo $GITHUB_API_ENDPOINT |
@@ -74,7 +74,7 @@ _findGitHeads() {
   GIT_START_REF=${1:-HEAD}
 
   # Check if $GIT_START_REF exists
-  if ! git rev-parse --quiet --verify origin/$GIT_START_REF > /dev/null; then
+  if ! git rev-parse --quiet --verify $GIT_START_REF > /dev/null; then
     _error $GIT_START_REF branch not found. Make sure you have the branch locally.
   fi
 }
