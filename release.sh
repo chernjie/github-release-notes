@@ -70,12 +70,13 @@ _findGithubToken() {
 }
 
 _findGitHeads() {
+  local last_tag=$(git tag --sort=-creatordate | head -1)
   GIT_TAG=${2:-HEAD}
-  GIT_START_REF=${1:-HEAD}
+  GIT_START_REF=${1:-$last_tag}
 
   # Check if $GIT_START_REF exists
   if ! git rev-parse --quiet --verify $GIT_START_REF > /dev/null; then
-    _error $GIT_START_REF branch not found. Make sure you have the branch locally.
+    _error $GIT_START_REF not found. Make sure you have the refname is reachable.
   fi
 }
 
@@ -98,5 +99,6 @@ USAGE
 
 case $1 in
   h|help|--help) _usage; grep -A100 OPTIONS $0;;
+  l|list|--list) git tag --sort=-creatordate ;;
   *) main $@ ;;
 esac
