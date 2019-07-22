@@ -23,7 +23,7 @@ use jq git curl grep tr sed xargs md5sum
 _releaseMessage() {
 
 cat <<TEMPLATE
-Merge $GIT_TAG to $GIT_START_REF:
+Changelog from $GIT_START_REF to $GIT_TAG:
 $(_showPullRequests)
 
 \`\`\`
