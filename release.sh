@@ -18,6 +18,13 @@ use() {
   done
 }
 
+_findEnvironmentVariable() {
+  local variableName=$1
+  test -n "${!variableName}" && return
+  read -p "$variableName: " "$variableName"
+  test -z "${!variableName}" && _error "$variableName not found"
+}
+
 use jq git curl grep tr sed xargs md5sum
 
 _releaseMessage() {
@@ -63,12 +70,6 @@ _fileHashes() {
   done
 }
 
-_findGithubToken() {
-  test -n "$GITHUB_TOKEN" && return
-  read -p "GITHUB_TOKEN: " GITHUB_TOKEN
-  test -z "$GITHUB_TOKEN" && _error "GITHUB_TOKEN not found"
-}
-
 _findGitHeads() {
   local last_tag=$(git tag --sort=-creatordate | head -1)
   GIT_TAG=${2:-HEAD}
@@ -82,7 +83,7 @@ _findGitHeads() {
 
 main () {
   _findGitHeads $@
-  _findGithubToken
+  _findEnvironmentVariable GITHUB_TOKEN
   _releaseMessage
 }
 
