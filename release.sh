@@ -20,8 +20,11 @@ use() {
 
 _findEnvironmentVariable() {
   local variableName=$1
+  local hint=""
+  test -n "$2" && hint="(Hint: $2)
+"
   test -n "${!variableName}" && return
-  read -p "$variableName: " "$variableName"
+  read -p "$hint$variableName=" "$variableName"
   test -z "${!variableName}" && _error "$variableName not found"
 }
 
