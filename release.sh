@@ -49,7 +49,7 @@ _showPullRequests() {
     grep -oE " #[0-9]+ " |
     tr -d "# " |
     xargs -n1 -I{} echo $GITHUB_API_ENDPOINT |
-    xargs curl --silent --header "Authorization:token $GITHUB_TOKEN" |
+    xargs curl --disable --silent --header "Authorization:token $GITHUB_TOKEN" |
     jq -r '[.number,.title] | @tsv' |
     sed "s/^/* #/g"
 }
