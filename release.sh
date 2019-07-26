@@ -55,11 +55,29 @@ _showPullRequests() {
 }
 
 _findGithubApiEndpoint() {
-  echo https://$(
-    git config remote.origin.url | grep -oE '@[^:]+' | tr -d @
-  )/api/v3/repos/$(
-    git config remote.origin.url | grep -oE ':.+' | tr -d : | sed s,\.git$,,
-  )/pulls/{}
+  case $(git config remote.origin.url) in
+    http*)
+      echo https://$(
+        git config remote.origin.url | cut -d/ -f3
+      )/api/v3/repos/$(
+        git config remote.origin.url | cut -d/ -f4-5 | sed s,\.git$,,
+      )/pulls/{}
+      ;;
+    ssh://*)
+      echo https://$(
+        git config remote.origin.url | grep -oE '@[^/]+' | tr -d @
+      )/api/v3/repos/$(
+        git config remote.origin.url | cut -d/ -f4-5 | sed s,\.git$,,
+      )/pulls/{}
+      ;;
+    git@*)
+      echo https://$(
+        git config remote.origin.url | grep -oE '@[^:]+' | tr -d @
+      )/api/v3/repos/$(
+        git config remote.origin.url | grep -oE ':.+' | tr -d : | sed s,\.git$,,
+      )/pulls/{}
+    ;;
+  esac
 }
 
 _getDiffFileList() {
