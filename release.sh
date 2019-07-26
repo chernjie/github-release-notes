@@ -96,6 +96,11 @@ _findGitHeads() {
   GIT_TAG=${2:-HEAD}
   GIT_START_REF=${1:-$last_tag}
 
+  if test -n "$GIT_TAG"
+  then
+    GIT_TAG=$(git rev-parse --short --verify --quiet "$GIT_TAG")
+  fi
+
   # Check if $GIT_START_REF exists
   if ! git rev-parse --quiet --verify $GIT_START_REF > /dev/null; then
     _error $GIT_START_REF not found. Make sure you have the refname is reachable.
