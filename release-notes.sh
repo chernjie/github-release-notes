@@ -18,77 +18,24 @@ use() {
   done
 }
 
-_findEnvironmentVariable() {
-  local variableName=$1
-  local hint=""
-  test -n "$2" && hint="(Hint: $2)
-"
-  test -n "${!variableName}" && return
-  read -p "$hint$variableName=" "$variableName"
-  test -z "${!variableName}" && _error "$variableName not found"
-}
-
-use jq git curl grep tr sed xargs md5sum
+use git grep tr xargs hub
 
 _releaseMessage() {
 
 cat <<TEMPLATE
-Changelog from $GIT_START_REF to $GIT_TAG:
-$(_showPullRequests)
+$GIT_TAG
 
-\`\`\`
-$(_getDiffFileList HEAD $GIT_START_REF | _fileHashes)
-\`\`\`
+[Changeset](../../compare/$GIT_START_REF...$GIT_TAG)
+$(_showPullRequests)
 TEMPLATE
 }
 
 _showPullRequests() {
-  local GIT_REF=$(git rev-parse --quiet --verify $GIT_TAG || echo HEAD)
-  local GITHUB_API_ENDPOINT=$(_findGithubApiEndpoint)
+  local GIT_REF=$(git rev-parse --quiet --verify $GIT_TAG)
   git log $GIT_START_REF...$GIT_REF --merges --format=%s |
     grep -oE " #[0-9]+ " |
     tr -d "# " |
-    xargs -n1 -I{} echo $GITHUB_API_ENDPOINT |
-    xargs curl --disable --silent --header "Authorization:token $GITHUB_TOKEN" |
-    jq -r '[.number,.title] | @tsv' |
-    sed "s/^/* #/g"
-}
-
-_findGithubApiEndpoint() {
-  case $(git config remote.origin.url) in
-    http*)
-      echo https://$(
-        git config remote.origin.url | cut -d/ -f3
-      )/api/v3/repos/$(
-        git config remote.origin.url | cut -d/ -f4-5 | sed s,\.git$,,
-      )/pulls/{}
-      ;;
-    ssh://*)
-      echo https://$(
-        git config remote.origin.url | grep -oE '@[^/]+' | tr -d @
-      )/api/v3/repos/$(
-        git config remote.origin.url | cut -d/ -f4-5 | sed s,\.git$,,
-      )/pulls/{}
-      ;;
-    git@*)
-      echo https://$(
-        git config remote.origin.url | grep -oE '@[^:]+' | tr -d @
-      )/api/v3/repos/$(
-        git config remote.origin.url | grep -oE ':.+' | tr -d : | sed s,\.git$,,
-      )/pulls/{}
-    ;;
-  esac
-}
-
-_getDiffFileList() {
-  git diff --name-only --ignore-submodules $1 $2
-}
-
-_fileHashes() {
-  while read i
-  do
-    test -f $i && md5sum $i || echo deleted $i
-  done
+    xargs -n1 hub issue show -f '* %i %t%n'
 }
 
 _findGitHeads() {
@@ -96,9 +43,9 @@ _findGitHeads() {
   GIT_TAG=${2:-HEAD}
   GIT_START_REF=${1:-$last_tag}
 
-  if test -n "$GIT_TAG"
+  if test "HEAD" = "$GIT_TAG"
   then
-    GIT_TAG=$(git rev-parse --short --verify --quiet "$GIT_TAG")
+    GIT_TAG=$(git describe --always --tags "$GIT_TAG")
   fi
 
   # Check if $GIT_START_REF exists
@@ -109,15 +56,41 @@ _findGitHeads() {
 
 main () {
   _findGitHeads $@
-  _findEnvironmentVariable GITHUB_TOKEN
   _releaseMessage
 }
 
 _usage() {
 cat <<USAGE
 
-Usage: $0 <commit> [<commit>]
-  Generate release messages given two branches
+Name:
+  `basename $0` Generate release notes based on Github pull request title from given two git-refs
+
+Usage:
+  `basename $0` [<lasttagname>] [<commit-ish>]
+
+Options:
+  -l, --list
+    list tags sorted by creatordate
+
+  -h, --help
+    print this help
+
+  <lasttagname>
+    represents the beginning of revision range. Defaults to last <tagname>
+
+  <commit-ish>
+    Commit-ish object names, branch or tagname represents the end of revision range. Defaults to HEAD
+
+Example:
+
+  `basename $0`
+
+  [Changeset](../../compare/<lasttagname>...<commit-ish>)
+  * #9 Use short ref instead of HEAD in changelog message
+  * #8 support other git remote standards for determining API endpoint
+  * #4 Update changelog message
+  * #3 If no variable is provided, default to the last tag
+  * #2 Add support for using tags as GIT_START_REF
 
 USAGE
 }
@@ -125,7 +98,7 @@ USAGE
 ### OPTIONS ###
 
 case $1 in
-  h|help|--help) _usage; grep -A100 OPTIONS $0;;
+  h|help|--help) _usage ;;
   l|list|--list) git tag --sort=-creatordate ;;
   *) main $@ ;;
 esac
