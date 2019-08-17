@@ -38,24 +38,49 @@ _showPullRequests() {
     xargs -n1 hub issue show -f '* %i %t%n'
 }
 
+_validateGitRef() {
+  for i in
+  do
+    if ! git rev-parse --quiet --verify $i > /dev/null
+    then
+      _error $i not found. Make sure the refname is reachable.
+    fi
+  done
+}
+
 _findGitHeads() {
-  local last_tag=$(git tag --sort=-creatordate | head -1)
+
   GIT_TAG=${2:-HEAD}
-  GIT_START_REF=${1:-$last_tag}
 
   if test "HEAD" = "$GIT_TAG"
   then
     GIT_TAG=$(git describe --always --tags "$GIT_TAG")
   fi
 
-  # Check if $GIT_START_REF exists
-  if ! git rev-parse --quiet --verify $GIT_START_REF > /dev/null; then
-    _error $GIT_START_REF not found. Make sure you have the refname is reachable.
+  GIT_START_REF=$(_findLastTag "$1" "$GIT_TAG")
+}
+
+# A more reliable way to find last tag
+# instead of `git tag --sort=-creatordate | head -1`
+_findLastTag() {
+  local lasttag="$1"
+
+  # find last tag in current tree
+  if test -z "$lasttag"; then
+    lasttag=$(git describe --long --tags "$GIT_TAG"~1 | tr - '\n' | sed -e \$d | sed -e \$d | xargs echo | tr \  -)
   fi
+
+  # find first ever commit
+  if test -z "$lasttag"; then
+    lasttag=$(git log --format=%h | tail -1)
+  fi
+
+  echo $lasttag
 }
 
 main () {
-  _findGitHeads $@
+  _validateGitRef "$@"
+  _findGitHeads "$@"
   _releaseMessage
 }
 
@@ -100,5 +125,5 @@ USAGE
 case $1 in
   h|help|--help) _usage ;;
   l|list|--list) git tag --sort=-creatordate ;;
-  *) main $@ ;;
+  *) main "$@" ;;
 esac
