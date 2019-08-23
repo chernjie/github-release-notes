@@ -39,3 +39,8 @@ Generate release notes based on Github pull request title from given two git-ref
 git tag $tagname
 hub release create $tagname -F <(release-notes.sh)
 ```
+
+## Dependencies:
+
+### [hub](https://hub.github.com)
+an extension to command-line git that helps you do everyday GitHub tasks without ever leaving the terminal.
