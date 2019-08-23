@@ -1,10 +1,10 @@
-# Generetate Changelog or Release Notes
+# Generate Changelog or Release Notes
 
 Generate release notes based on Github pull request title from given two git-refs
 
 ## Usage:
 
-  release-notes.sh [<lasttagname>] [<commit-ish>]
+  release-notes.sh [&lt;lasttagname>] [&lt;commit-ish>]
 
 ### Options:
 
@@ -14,10 +14,10 @@ Generate release notes based on Github pull request title from given two git-ref
   -h, --help
     print this help
 
-  <lasttagname>
-    represents the beginning of revision range. Defaults to last <tagname>
+  &lt;lasttagname>
+    represents the beginning of revision range. Defaults to last &lt;tagname>
 
-  <commit-ish>
+  &lt;commit-ish>
     Commit-ish object names, branch or tagname represents the end of revision range. Defaults to HEAD
 
 ## Example:
