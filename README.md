@@ -37,7 +37,7 @@ Generate release notes based on Github pull request title from given two git-ref
 
 ```shell
 git tag $tagname
-hub release create $tagname -F <(release-notes.sh)
+hub release create -F <(release-notes.sh) --edit $tagname
 ```
 
 ## Dependencies:
