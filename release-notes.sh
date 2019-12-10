@@ -32,8 +32,8 @@ TEMPLATE
 
 _showPullRequests() {
   local GIT_REF=$(git rev-parse --quiet --verify $GIT_TAG)
-  git log $GIT_START_REF...$GIT_REF --merges --format=%s |
-    grep -oE "[ \(]#[0-9]+[ \)$]" |
+  git log $GIT_START_REF...$GIT_REF --format=%s |
+    grep -oE "[ \(]#[0-9]+( |\)$)" |
     tr -d "# ()" |
     xargs -n1 hub issue show -f '* %i %t%n'
 }
