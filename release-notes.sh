@@ -50,20 +50,20 @@ _validateGitRef() {
 
 _findGitHeads() {
 
-  GIT_TAG=${2:-HEAD}
+  GIT_TAG=${1:-HEAD}
 
   if test "HEAD" = "$GIT_TAG"
   then
     GIT_TAG=$(git describe --always --tags "$GIT_TAG")
   fi
 
-  GIT_START_REF=$(_findLastTag "$1" "$GIT_TAG")
+  GIT_START_REF=$(_findLastTag "$GIT_TAG" "$2")
 }
 
 # A more reliable way to find last tag
 # instead of `git tag --sort=-creatordate | head -1`
 _findLastTag() {
-  local lasttag="$1"
+  local lasttag="$2"
 
   # find last tag in current tree
   if test -z "$lasttag"; then
@@ -91,7 +91,7 @@ Name:
   `basename $0` Generate release notes based on Github pull request title from given two git-refs
 
 Usage:
-  `basename $0` [<lasttagname>] [<commit-ish>]
+  `basename $0` [<commit-ish>] [<lasttagname>]
 
 Options:
   -l, --list
@@ -100,11 +100,11 @@ Options:
   -h, --help
     print this help
 
-  <lasttagname>
-    represents the beginning of revision range. Defaults to last <tagname>
-
   <commit-ish>
     Commit-ish object names, branch or tagname represents the end of revision range. Defaults to HEAD
+
+  <lasttagname>
+    represents the beginning of revision range. Defaults to last <tagname>
 
 Example:
 
