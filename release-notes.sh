@@ -35,6 +35,7 @@ _showPullRequests() {
   git log $GIT_START_REF...$GIT_REF --format=%s |
     grep -oE "[ \(]#[0-9]+( |\)$)" |
     tr -d "# ()" |
+    sort -urn |
     xargs -n1 hub issue show -f '* %i %t%n'
 }
 
