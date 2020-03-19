@@ -93,6 +93,7 @@ Name:
 
 Usage:
   `basename $0` [<commit-ish>] [<lasttagname>]
+  `basename $0` --release <tagname>
 
 Options:
   -l, --list
@@ -126,5 +127,6 @@ USAGE
 case $1 in
   h|help|--help) _usage ;;
   l|list|--list) git tag --sort=-creatordate ;;
+  --release) shift; hub release create $1 -F <($0 $1) --edit ;;
   *) main "$@" ;;
 esac

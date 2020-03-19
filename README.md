@@ -4,7 +4,8 @@ Generate release notes based on Github pull request title from given two git-ref
 
 ## Usage:
 
-  release-notes.sh [&lt;lasttagname>] [&lt;commit-ish>]
+  release-notes.sh [&lt;commit-ish>] [&lt;lasttagname>]
+  release-notes.sh --release <tagname>
 
 ### Options:
 
@@ -14,11 +15,11 @@ Generate release notes based on Github pull request title from given two git-ref
   -h, --help
     print this help
 
-  &lt;lasttagname>
-    represents the beginning of revision range. Defaults to last &lt;tagname>
-
   &lt;commit-ish>
     Commit-ish object names, branch or tagname represents the end of revision range. Defaults to HEAD
+
+  &lt;lasttagname>
+    represents the beginning of revision range. Defaults to last &lt;tagname>
 
 ## Example:
 
@@ -37,7 +38,8 @@ Generate release notes based on Github pull request title from given two git-ref
 
 ```shell
 git tag $tagname
-hub release create -F <(release-notes.sh) --edit $tagname
+git push --tags
+release-notes.sh --release $tagname
 ```
 
 ## Dependencies:
