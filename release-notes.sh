@@ -127,6 +127,6 @@ USAGE
 case $1 in
   h|help|--help) _usage ;;
   l|list|--list) git tag --sort=-creatordate ;;
-  --release) shift; hub release create $1 -F <($0 $1) --edit ;;
+  --release) shift; hub release create $1 -F <($0 $@) --edit ;;
   *) main "$@" ;;
 esac
