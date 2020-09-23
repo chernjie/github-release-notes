@@ -5,6 +5,7 @@ Generate release notes based on Github pull request title from given two git-ref
 ## Usage:
 
   release-notes.sh [&lt;commit-ish>] [&lt;lasttagname>]
+
   release-notes.sh --release <tagname>
 
 ### Options:
