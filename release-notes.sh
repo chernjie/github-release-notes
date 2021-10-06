@@ -33,7 +33,8 @@ TEMPLATE
 _showPullRequests() {
   local GIT_REF=$(git rev-parse --quiet --verify $GIT_TAG)
   git log $GIT_START_REF...$GIT_REF --format=%s |
-    grep -oE "[ \(]#[0-9]+( |\)$)" |
+    grep -oE -e "[ \(]#[0-9]+( |\)$)" -e "origin/pull/([0-9]+)/head" |
+    sed -e "s,origin/pull/,(,g" -e "s,/head,),g" |
     tr -d "# ()" |
     sort -urn |
     xargs -n1 hub issue show -f '* %i %t%n'
