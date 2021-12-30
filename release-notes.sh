@@ -20,6 +20,10 @@ use() {
 
 use git grep tr xargs hub
 
+_rev-parse-verify() {
+  git rev-parse --quiet --verify $1
+}
+
 _releaseMessage() {
 
 cat <<TEMPLATE
@@ -31,7 +35,7 @@ TEMPLATE
 }
 
 _showPullRequests() {
-  local GIT_REF=$(git rev-parse --quiet --verify $GIT_TAG)
+  local GIT_REF=$(_rev-parse-verify $GIT_TAG)
   git log $GIT_START_REF...$GIT_REF --format=%s |
     grep -oE -e "[ \(]#[0-9]+( |\)$)" -e "origin/pull/([0-9]+)/head" |
     sed -e "s,origin/pull/,(,g" -e "s,/head,),g" |
@@ -43,7 +47,7 @@ _showPullRequests() {
 _validateGitRef() {
   for i in
   do
-    if ! git rev-parse --quiet --verify $i > /dev/null
+    if ! _rev-parse-verify $i > /dev/null
     then
       _error $i not found. Make sure the refname is reachable.
     fi
@@ -86,6 +90,17 @@ main () {
   _releaseMessage
 }
 
+_release() {
+  case $1 in
+    --draft) local _draft="--draft --prerelease" ;;
+    --release) local _draft="" ;;
+  esac
+  shift
+  hub release create $1 --edit $_draft \
+    --commitish "$(_rev-parse-verify $1 || _rev-parse-verify HEAD)" \
+    --file <($0 "$(_rev-parse-verify $1 || echo HEAD)" "$2")
+}
+
 _usage() {
 cat <<USAGE
 
@@ -95,6 +110,7 @@ Name:
 Usage:
   `basename $0` [<commit-ish>] [<lasttagname>]
   `basename $0` --release <tagname>
+  `basename $0` --draft <tagname>
 
 Options:
   -l, --list
@@ -128,6 +144,6 @@ USAGE
 case $1 in
   h|help|--help) _usage ;;
   l|list|--list) git tag --sort=-creatordate ;;
-  --release) shift; hub release create $1 -F <($0 $@) --edit ;;
+  --release|--draft) _release "$@" ;;
   *) main "$@" ;;
 esac

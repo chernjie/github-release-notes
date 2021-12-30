@@ -6,7 +6,9 @@ Generate release notes based on Github pull request title from given two git-ref
 
   release-notes.sh [&lt;commit-ish>] [&lt;lasttagname>]
 
-  release-notes.sh --release <tagname>
+  release-notes.sh --release &lt;tagname>
+
+  release-notes.sh --draft &lt;tagname>
 
 ### Options:
 
@@ -47,3 +49,7 @@ release-notes.sh --release $tagname
 
 ### [hub](https://hub.github.com)
 an extension to command-line git that helps you do everyday GitHub tasks without ever leaving the terminal.
+
+# Alternatives
+
+[Automatically generated release notes](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes)
