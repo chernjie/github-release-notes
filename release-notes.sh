@@ -2,18 +2,23 @@
 
 # @author CJ lim@chernjie.com
 
+COLOR_YELLOW(){ echo -en "\033[33m"; }
 COLOR_RED()   { echo -en "\033[31m"; }
 COLOR_RESET() { echo -en "\033[0m";  }
 
+_warn() {
+  COLOR_YELLOW && echo $(date) "$@" && COLOR_RESET
+}
+
 _error() {
-  COLOR_RED && echo $(date) "$@" && COLOR_RESET && exit 1
+  COLOR_RED && echo $(date) "$@" >&2 && COLOR_RESET && exit 1
 }
 
 use() {
   for i do
     if ! command -v $i > /dev/null
     then
-      _error command $i not found
+      _error command $i not found >&2
     fi
   done
 }
@@ -25,18 +30,20 @@ _rev-parse-verify() {
 }
 
 _releaseMessage() {
+  local _release_title="$(_make-title "$1")"
+  local GIT_REF="$(_find-valid-latest-ref $1)"
+  local GIT_START_REF="$(_findLastTag "$GIT_REF" "$2")"
 
 cat <<TEMPLATE
-$GIT_TAG
+$_release_title
 
-[Changeset](../../compare/$GIT_START_REF...$GIT_TAG)
-$(_showPullRequests)
+[Changeset](../../compare/$GIT_START_REF...$GIT_REF)
+$(_showPullRequests $GIT_START_REF...$GIT_REF)
 TEMPLATE
 }
 
 _showPullRequests() {
-  local GIT_REF=$(_rev-parse-verify $GIT_TAG)
-  git log $GIT_START_REF...$GIT_REF --format=%s |
+  git log "$1" --format=%s |
     grep -oE -e "[ \(]#[0-9]+( |\)$)" -e "origin/pull/([0-9]+)/head" |
     sed -e "s,origin/pull/,(,g" -e "s,/head,),g" |
     tr -d "# ()" |
@@ -45,35 +52,39 @@ _showPullRequests() {
 }
 
 _validateGitRef() {
-  for i in
-  do
-    if ! _rev-parse-verify $i > /dev/null
-    then
-      _error $i not found. Make sure the refname is reachable.
-    fi
-  done
+  if test -n "$1" && ! _rev-parse-verify $1 > /dev/null
+  then _warn $1 not found, defaulting to current HEAD. >&2
+  fi
+  if test -n "$2" && ! _rev-parse-verify $2 > /dev/null
+  then _error $2 not found. Make sure the refname is reachable. >&2
+  fi
 }
 
-_findGitHeads() {
-
-  GIT_TAG=${1:-HEAD}
-
-  if test "HEAD" = "$GIT_TAG"
-  then
-    GIT_TAG=$(git describe --always --tags "$GIT_TAG")
+_make-title() {
+  if test -n "$1" && _rev-parse-verify $1 > /dev/null
+  then git describe --always --tags $1
+  elif test -n "$1"
+  then echo $1
+  else git describe --always --tags HEAD
   fi
+}
 
-  GIT_START_REF=$(_findLastTag "$GIT_TAG" "$2")
+_find-valid-latest-ref() {
+  if test -n "$1" && _rev-parse-verify $1 > /dev/null
+  then git describe --always --tags $1
+  else git describe --always --tags HEAD
+  fi
 }
 
 # A more reliable way to find last tag
 # instead of `git tag --sort=-creatordate | head -1`
 _findLastTag() {
+  local GIT_REF="$1"
   local lasttag="$2"
 
   # find last tag in current tree
   if test -z "$lasttag"; then
-    lasttag=$(git describe --long --tags "$GIT_TAG"~1 | tr - '\n' | sed -e \$d | sed -e \$d | xargs echo | tr \  -)
+    lasttag=$(git describe --long --tags "$GIT_REF"~1 | tr - '\n' | sed -e \$d | sed -e \$d | xargs echo | tr \  -)
   fi
 
   # find first ever commit
@@ -86,8 +97,7 @@ _findLastTag() {
 
 main () {
   _validateGitRef "$@"
-  _findGitHeads "$@"
-  _releaseMessage
+  _releaseMessage "$@"
 }
 
 _release() {
@@ -98,7 +108,7 @@ _release() {
   shift
   hub release create $1 --edit $_draft \
     --commitish "$(_rev-parse-verify $1 || _rev-parse-verify HEAD)" \
-    --file <($0 "$(_rev-parse-verify $1 || echo HEAD)" "$2")
+    --file <($0 "$@")
 }
 
 _usage() {
