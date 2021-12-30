@@ -47,6 +47,9 @@ release-notes.sh --release $tagname
 
 ## Dependencies:
 
+### [gh-cli](https://cli.github.com)
+GitHub command-line tool
+
 ### [hub](https://hub.github.com)
 an extension to command-line git that helps you do everyday GitHub tasks without ever leaving the terminal.
 

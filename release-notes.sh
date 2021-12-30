@@ -23,7 +23,11 @@ use() {
   done
 }
 
-use git grep tr xargs hub
+use git grep tr xargs
+
+_hasGhCli() { command -v gh > /dev/null; }
+_hasHub() { command -v hub > /dev/null; }
+_hasGhCli || _hasHub || _error command gh-cli not found >&2
 
 _rev-parse-verify() {
   git rev-parse --quiet --verify $1
@@ -48,7 +52,12 @@ _showPullRequests() {
     sed -e "s,origin/pull/,(,g" -e "s,/head,),g" |
     tr -d "# ()" |
     sort -urn |
-    xargs -n1 hub issue show -f '* %i %t%n'
+    if _hasGhCli
+    then xargs -n1 -I{} gh issue view {} \
+        --json 'number,title,author' \
+        --jq '"* #" + (.number | tostring) +" " +.title + " @" + .author.login'
+    else xargs -n1 hub issue show -f '* %i %t%n'
+    fi
 }
 
 _validateGitRef() {
@@ -106,9 +115,19 @@ _release() {
     --release) local _draft="" ;;
   esac
   shift
-  hub release create $1 --edit $_draft \
-    --commitish "$(_rev-parse-verify $1 || _rev-parse-verify HEAD)" \
-    --file <($0 "$@")
+  if _hasGhCli
+  then
+    main "$@" |
+      gh release create $1 \
+        --title $1 \
+        --target "$(_rev-parse-verify $1 || _rev-parse-verify HEAD)" \
+        --notes-file - \
+        $_draft
+  else
+    hub release create $1 --edit $_draft \
+        --commitish "$(_rev-parse-verify $1 || _rev-parse-verify HEAD)" \
+        --file <($0 "$@")
+  fi
 }
 
 _usage() {
