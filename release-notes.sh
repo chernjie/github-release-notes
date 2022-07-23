@@ -93,7 +93,9 @@ _findLastTag() {
 
   # find last tag in current tree
   if test -z "$lasttag"; then
-    lasttag=$(git describe --long --tags "$GIT_REF"~1 | tr - '\n' | sed -e \$d | sed -e \$d | xargs echo | tr \  -)
+    # TODO what if GIT_REF is not a merge commit: use self
+    # TODO what if GIT_REF has more than two parents
+    lasttag=$(git describe --long --tags "$GIT_REF"^1 | tr - '\n' | sed -e \$d | sed -e \$d | xargs echo | tr \  -)
   fi
 
   # find first ever commit
